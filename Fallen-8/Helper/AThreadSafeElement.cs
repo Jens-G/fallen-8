@@ -38,7 +38,7 @@ namespace NoSQL.GraphDB.Helper
     /// </summary>
     public abstract class AThreadSafeElement
     {
-        private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+        private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
         private static TimeSpan _timeout = new TimeSpan(0, 0, 60); 
 
