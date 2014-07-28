@@ -60,7 +60,7 @@ namespace NoSQL.GraphDB
         /// <summary>
         ///   The graph elements
         /// </summary>
-        private BigList<AGraphElement> _graphElements;
+        private List<AGraphElement> _graphElements;
 
         /// <summary>
         ///   The index factory.
@@ -102,7 +102,7 @@ namespace NoSQL.GraphDB
         public Fallen8()
         {
             IndexFactory = new IndexFactory();
-            _graphElements = new BigList<AGraphElement>();
+            _graphElements = new List<AGraphElement>();
             ServiceFactory = new ServiceFactory(this);
             IndexFactory.Indices.Clear();
         }
@@ -145,7 +145,7 @@ namespace NoSQL.GraphDB
                 GC.WaitForFullGCComplete();
                 GC.WaitForPendingFinalizers();
 #endif
-                _graphElements = new BigList<AGraphElement>();
+                _graphElements = new List<AGraphElement>();
 
                 var success = PersistencyFactory.Load(this, ref _graphElements, path, ref _currentId, startServices);
 
@@ -190,7 +190,7 @@ namespace NoSQL.GraphDB
             if (WriteResource())
             {
                 _currentId = 0;
-                _graphElements = new BigList<AGraphElement>();
+                _graphElements = new List<AGraphElement>();
                 IndexFactory.DeleteAllIndices();
                 VertexCount = 0;
                 EdgeCount = 0;
@@ -211,7 +211,7 @@ namespace NoSQL.GraphDB
                 var newVertex = new VertexModel(_currentId, creationDate, properties);
 
                 //insert it
-                _graphElements.SetValue(_currentId, newVertex);
+                _graphElements.Insert(_currentId, newVertex);
 
                 //increment the id
                 Interlocked.Increment(ref _currentId);
@@ -234,8 +234,8 @@ namespace NoSQL.GraphDB
             {
                 EdgeModel outgoingEdge = null;
 
-                var sourceVertex = _graphElements.GetElement(sourceVertexId) as VertexModel;
-                var targetVertex = _graphElements.GetElement(targetVertexId) as VertexModel;
+                var sourceVertex = _graphElements[sourceVertexId] as VertexModel;
+                var targetVertex = _graphElements[targetVertexId] as VertexModel;
 
                 //get the related vertices
                 if (sourceVertex != null && targetVertex != null)
@@ -243,7 +243,7 @@ namespace NoSQL.GraphDB
                     outgoingEdge = new EdgeModel(_currentId, creationDate, targetVertex, sourceVertex, properties);
 
                     //add the edge to the graph elements
-                    _graphElements.SetValue(_currentId, outgoingEdge);
+                    _graphElements.Insert(_currentId, outgoingEdge);
 
                     //increment the ids
                     Interlocked.Increment(ref _currentId);
@@ -271,7 +271,7 @@ namespace NoSQL.GraphDB
             if (WriteResource())
             {
                 var success = false;
-                AGraphElement graphElement = _graphElements.GetElement(graphElementId);
+                AGraphElement graphElement = _graphElements[graphElementId];
                 if (graphElement != null)
                 {
                     success = graphElement != null && graphElement.TryAddProperty(propertyId, property);
@@ -289,7 +289,7 @@ namespace NoSQL.GraphDB
         {
             if (WriteResource())
             {
-                var graphElement = _graphElements.GetElement(graphElementId);
+                var graphElement = _graphElements[graphElementId];
 
                 var success = graphElement != null && graphElement.TryRemoveProperty(propertyId);
 
@@ -305,7 +305,7 @@ namespace NoSQL.GraphDB
         {
             if (WriteResource())
             {
-                AGraphElement graphElement = _graphElements.GetElement(graphElementId);
+                AGraphElement graphElement = _graphElements[graphElementId];
 
                 if (graphElement == null)
                 {
@@ -322,7 +322,7 @@ namespace NoSQL.GraphDB
                 {
                     #region remove element
 
-                    _graphElements.SetDefault(graphElementId);
+                    _graphElements.RemoveAt(graphElementId);
 
                     if (graphElement is VertexModel)
                     {
@@ -346,7 +346,7 @@ namespace NoSQL.GraphDB
                                     aOutEdge.TargetVertex.RemoveIncomingEdge(aOutEdgeContainer.EdgePropertyId, aOutEdge);
 
                                     //remove the edge itself
-                                    _graphElements.SetDefault(aOutEdge.Id);
+                                    _graphElements.RemoveAt(aOutEdge.Id);
                                 }
                             }
                         }
@@ -369,7 +369,7 @@ namespace NoSQL.GraphDB
                                     aInEdge.SourceVertex.RemoveOutGoingEdge(aInEdgeContainer.EdgePropertyId, aInEdge);
 
                                     //remove the edge itself
-                                    _graphElements.SetDefault(aInEdge.Id);
+                                    _graphElements.RemoveAt(aInEdge.Id);
                                 }
                             }
                         }
@@ -405,7 +405,7 @@ namespace NoSQL.GraphDB
                 {
                     #region restore
 
-                    _graphElements.SetValue(graphElementId, graphElement);
+                    _graphElements.Insert(graphElementId, graphElement);
 
                     if (graphElement is VertexModel)
                     {
@@ -429,7 +429,7 @@ namespace NoSQL.GraphDB
                                     aOutEdge.TargetVertex.AddIncomingEdge(aOutEdgeContainer.EdgePropertyId, aOutEdge);
 
                                     //reset the edge
-                                    _graphElements.SetValue(aOutEdge.Id, aOutEdge);
+                                    _graphElements.Insert(aOutEdge.Id, aOutEdge);
                                 }
                             }
                         }
@@ -452,7 +452,7 @@ namespace NoSQL.GraphDB
                                     aInEdge.SourceVertex.AddOutEdge(aInEdgeContainer.EdgePropertyId, aInEdge);
 
                                     //reset the edge
-                                    _graphElements.SetValue(aInEdge.Id, aInEdge);
+                                    _graphElements.Insert(aInEdge.Id, aInEdge);
                                 }
                             }
                         }
@@ -510,7 +510,7 @@ namespace NoSQL.GraphDB
         {
             if (ReadResource())
             {
-                result = _graphElements.GetElement(id) as VertexModel;
+                result = _graphElements[id] as VertexModel;
 
                 FinishReadResource();
 
@@ -524,7 +524,7 @@ namespace NoSQL.GraphDB
         {
             if (ReadResource())
             {
-                result = _graphElements.GetElement(id) as EdgeModel;
+                result = _graphElements[id] as EdgeModel;
 
                 FinishReadResource();
 
@@ -538,7 +538,7 @@ namespace NoSQL.GraphDB
         {
             if (ReadResource())
             {
-                result = _graphElements.GetElement(id);
+                result = _graphElements[id];
 
                 FinishReadResource();
 
@@ -883,7 +883,7 @@ namespace NoSQL.GraphDB
         {
             for (var i = 0; i <= _currentId; i++)
             {
-                AGraphElement graphElement = _graphElements.GetElement(i);
+                AGraphElement graphElement = _graphElements[i];
                 if (graphElement != null)
                 {
                     graphElement.Trim();

@@ -38,7 +38,7 @@ namespace NoSQL.GraphDB.Model
     /// <summary>
     ///   A graph element.
     /// </summary>
-    public abstract class AGraphElement : AThreadSafeElement
+    public abstract class AGraphElement
     {
         #region Data
 
@@ -90,16 +90,7 @@ namespace NoSQL.GraphDB.Model
         /// <returns> Creation date </returns>
         public DateTime GetCreationDate()
         {
-            if (ReadResource())
-            {
-                var creationDate = DateHelper.GetDateTimeFromUnixTimeStamp(CreationDate);
-
-                FinishReadResource();
-
-                return creationDate;
-            }
-
-            throw new CollisionException();
+            return DateHelper.GetDateTimeFromUnixTimeStamp(CreationDate);
         }
 
         /// <summary>
@@ -108,16 +99,7 @@ namespace NoSQL.GraphDB.Model
         /// <returns> Modification date </returns>
         public DateTime GetModificationDate()
         {
-            if (ReadResource())
-            {
-                var modificationDate = DateHelper.GetDateTimeFromUnixTimeStamp(CreationDate + ModificationDate);
-
-                FinishReadResource();
-
-                return modificationDate;
-            }
-
-            throw new CollisionException();
+            return DateHelper.GetDateTimeFromUnixTimeStamp(CreationDate + ModificationDate);
         }
 
         /// <summary>
@@ -126,16 +108,7 @@ namespace NoSQL.GraphDB.Model
         /// <returns> Count of Properties </returns>
         public Int32 GetPropertyCount()
         {
-            if (ReadResource())
-            {
-                var count = _properties.Length;
-
-                FinishReadResource();
-
-                return count;
-            }
-
-            throw new CollisionException();
+            return _properties.Length;
         }
 
         /// <summary>
@@ -323,5 +296,23 @@ namespace NoSQL.GraphDB.Model
         }
 
         #endregion
+
+        protected bool ReadResource ()
+        {
+            return true;
+        }
+
+        protected void FinishWriteResource ()
+        {
+        }
+
+        protected bool WriteResource ()
+        {
+            return true;
+        }
+
+        protected void FinishReadResource ()
+        {
+        }
     }
 }
