@@ -100,7 +100,7 @@ namespace NoSQL.GraphDB.Service.REST
         [OperationContract(Name = "VertexCount")]
 		[Description("Gets the number of vertices.")]
         [WebGet(UriTemplate = "/Status/VertexCount", ResponseFormat = WebMessageFormat.Json)]
-        UInt32 VertexCount();
+        Int32 VertexCount();
 
 		/// <summary>
         /// Gets the number of edges
@@ -109,7 +109,7 @@ namespace NoSQL.GraphDB.Service.REST
         [OperationContract(Name = "EdgeCount")]
 		[Description("Gets the number of edges")]
         [WebGet(UriTemplate = "/Status/EdgeCount", ResponseFormat = WebMessageFormat.Json)]
-        UInt32 EdgeCount();
+        Int32 EdgeCount();
 
 		/// <summary>
         /// Gets the number of free bytes in RAM

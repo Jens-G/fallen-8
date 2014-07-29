@@ -45,6 +45,7 @@ using NoSQL.GraphDB.Model;
 using NoSQL.GraphDB.Persistency;
 using NoSQL.GraphDB.Plugin;
 using NoSQL.GraphDB.Service;
+using System.Threading.Tasks;
 
 #endregion
 
@@ -63,6 +64,13 @@ namespace NoSQL.GraphDB
         private List<AGraphElement> _graphElements;
 
         /// <summary>
+        /// The delegate to find elements in the big list
+        /// </summary>
+        /// <param name="objectOfT">The to be analyzed object of T</param>
+        /// <returns>True or false</returns>
+        public delegate Boolean ElementSeeker(AGraphElement objectOfT);
+
+        /// <summary>
         ///   The index factory.
         /// </summary>
         public IndexFactory IndexFactory { get; internal set; }
@@ -75,12 +83,12 @@ namespace NoSQL.GraphDB
         /// <summary>
         /// The count of edges
         /// </summary>
-        public UInt32 EdgeCount { get; private set; }
+        public Int32 EdgeCount { get; private set; }
 
         /// <summary>
         /// The count of vertices
         /// </summary>
-        public UInt32 VertexCount { get; private set; }
+        public Int32 VertexCount { get; private set; }
 
         /// <summary>
         ///   The current identifier.
@@ -775,7 +783,7 @@ namespace NoSQL.GraphDB
         {
             if (ReadResource())
             {
-                var result = _graphElements.FindElements(
+                var result = FindElements(
                     aGraphElement =>
                         {
                             Object property;
@@ -788,6 +796,18 @@ namespace NoSQL.GraphDB
             }
 
             throw new CollisionException();
+        }
+
+        /// <summary>
+        /// Find elements by scanning the list
+        /// </summary>
+        /// <param name="seeker">A delegate to search for the right element</param>
+        /// <returns>A list of matching graph elements</returns>
+        private List<AGraphElement> FindElements(ElementSeeker seeker)
+        {
+            return _graphElements.AsParallel()
+                .Where(_ => _!=null && seeker(_))
+                .ToList();
         }
 
         /// <summary>
@@ -914,8 +934,14 @@ namespace NoSQL.GraphDB
         /// </summary>
         private void RecalculateGraphElementCounter()
         {
-            EdgeCount = _graphElements.GetCountOf<EdgeModel>();
-            VertexCount = _graphElements.GetCountOf<VertexModel>();
+            EdgeCount = GetCountOf<EdgeModel>();
+            VertexCount = GetCountOf<VertexModel>();
+        }
+
+        public int GetCountOf<TInteresting>()
+        {
+            return _graphElements.AsParallel()
+                .Where(_ => _ != null && _ is TInteresting).Count();
         }
 
         #endregion
