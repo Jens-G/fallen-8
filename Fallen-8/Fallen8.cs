@@ -100,6 +100,8 @@ namespace NoSQL.GraphDB
         /// </summary>
         private delegate Boolean BinaryOperatorDelegate(IComparable property, IComparable literal);
 
+        private ReaderWriterLockSlim theLock;
+
         #endregion
 
         #region Constructor
@@ -109,6 +111,7 @@ namespace NoSQL.GraphDB
         /// </summary>
         public Fallen8()
         {
+            theLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
             IndexFactory = new IndexFactory();
             _graphElements = new List<AGraphElement>();
             ServiceFactory = new ServiceFactory(this);
@@ -1055,8 +1058,83 @@ namespace NoSQL.GraphDB
 
             ServiceFactory.ShutdownAllServices();
             ServiceFactory = null;
+
+            theLock.Dispose();
+            theLock = null;
         }
 
         #endregion
+
+
+        #region nested Lock class
+
+        public Lock WriteLock()
+        {
+            return new Lock(theLock, true);
+        }
+
+
+        public Lock ReadLock()
+        {
+            return new Lock(theLock, false);
+        }
+
+
+        /// <summary>
+        /// Lock helper, useful in cases where a multi-step operation needs to be performed atomically (e.g. test and delete an element)
+        /// </summary>
+        public class Lock : IDisposable
+        {
+            private bool forWrite;
+            private bool locked = false;
+            private ReaderWriterLockSlim theLock;
+
+
+            public Lock(ReaderWriterLockSlim theLock, bool forWrite)
+            {
+                this.forWrite = forWrite;
+                this.theLock = theLock;
+
+                if( forWrite)
+                    theLock.EnterWriteLock();
+                else
+                    theLock.EnterReadLock();
+
+                this.locked = true;
+            }
+
+
+            #region IDisposable
+
+            ~Lock()
+            {
+                Dispose(false);
+            }
+
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this); // prevent finalization code from executing a second time.
+            }
+
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (locked)
+                {
+                    locked = false;
+
+                    if (forWrite)
+                        theLock.ExitWriteLock();
+                    else
+                        theLock.ExitReadLock();
+                }
+            }
+
+            #endregion IDisposable
+        }
+
+        #endregion nested Lock class
     }
 }

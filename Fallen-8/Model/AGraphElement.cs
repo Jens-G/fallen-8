@@ -238,7 +238,7 @@ namespace NoSQL.GraphDB.Model
         /// <param name='propertyId'> If set to <c>true</c> property identifier. </param>
         /// <param name='property'> If set to <c>true</c> property. </param>
         /// <exception cref='CollisionException'>Is thrown when the collision exception.</exception>
-        internal bool TryAddProperty(UInt16 propertyId, object property)
+        public bool TryAddProperty(UInt16 propertyId, object property)
         {
             if (WriteResource())
             {
@@ -300,7 +300,7 @@ namespace NoSQL.GraphDB.Model
         /// <returns> <c>true</c> if the property was removed; otherwise, <c>false</c> if there was no such property. </returns>
         /// <param name='propertyId'> If set to <c>true</c> property identifier. </param>
         /// <exception cref='CollisionException'>Is thrown when the collision exception.</exception>
-        internal bool TryRemoveProperty(UInt16 propertyId)
+        public bool TryRemoveProperty(UInt16 propertyId)
         {
             if (WriteResource())
             {
