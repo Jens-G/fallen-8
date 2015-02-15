@@ -62,11 +62,14 @@ namespace NoSQL.GraphDB.Helper
                 while ((_usingResource & 0xfff00000) != 0)
                     Thread.Yield();
 
+                // volatile safe with interlocked(), disable warning
+                #pragma warning disable 0420 
                 if ((Interlocked.Increment(ref _usingResource) & 0xfff00000) == 0) {
                     return true;
                 }
 
                 Interlocked.Decrement(ref _usingResource);
+                #pragma warning restore 0420  // restore warning
             }
 
             return false;
@@ -78,7 +81,10 @@ namespace NoSQL.GraphDB.Helper
         protected void FinishReadResource ()
         {
             //Release the lock
+            // volatile safe with interlocked(), disable warning
+            #pragma warning disable 0420
             Interlocked.Decrement (ref _usingResource);
+            #pragma warning restore 0420  // restore warning
         }
 
         /// <summary>
@@ -94,6 +100,8 @@ namespace NoSQL.GraphDB.Helper
                 while ((_usingResource & 0xfff00000) != 0)
                     Thread.Yield();
 
+                // volatile safe with interlocked(), disable warning
+                #pragma warning disable 0420
                 if ((Interlocked.Add(ref _usingResource, 0x100000) & 0xfff00000) == 0x100000) {
 #if DEBUG
                     lockerStack = Environment.StackTrace;
@@ -105,6 +113,7 @@ namespace NoSQL.GraphDB.Helper
                 }
 
                 Interlocked.Add(ref _usingResource, - 0x100000);
+                #pragma warning restore 0420  // restore warning
             }
 
             return false;
@@ -119,7 +128,10 @@ namespace NoSQL.GraphDB.Helper
 #if DEBUG
             lockerStack = String.Empty;
 #endif
+            // volatile safe with interlocked(), disable warning
+            #pragma warning disable 0420
             Interlocked.Add(ref _usingResource, - 0x100000);
+            #pragma warning restore 0420  // restore warning
         }
     }
 }
